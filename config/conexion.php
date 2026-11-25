@@ -1,31 +1,31 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+$esLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1']);
+
+if ($esLocal) {
+    // Entorno local (XAMPP)
+    $host = 'localhost';
+    $db   = 'bd_abarrotes_arequipa';
+    $user = 'root';
+    $pass = '';
+} else {
+    // Entorno de producción (InfinityFree)
+    $host = 'sql112.infinityfree.com';
+    $db   = 'if0_43528052_abarrotes';
+    $user = 'if0_43528052';
+    $pass = 'teamodaniel02';
 }
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'bd_abarrotes_arequipa');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4');
+$charset = 'utf8mb4';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
 
 try {
-    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
-    $opciones = [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-    ];
-    $pdo = new PDO($dsn, DB_USER, DB_PASS, $opciones);
-
-    $stmtCheck = $pdo->prepare("SELECT id_usuario, password FROM usuarios WHERE email = ?");
-    $stmtCheck->execute(['admin@abarrotesarequipa.pe']);
-    $adminRow = $stmtCheck->fetch();
-    if ($adminRow && !password_verify('Admin2026*', $adminRow['password'])) {
-        $nuevoHash = password_hash('Admin2026*', PASSWORD_BCRYPT);
-        $pdo->prepare("UPDATE usuarios SET password = ? WHERE id_usuario = ?")->execute([$nuevoHash, $adminRow['id_usuario']]);
-    }
+    $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
     die("Error de conexión con la base de datos: " . $e->getMessage());
 }
-?>
